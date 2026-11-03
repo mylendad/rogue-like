@@ -74,5 +74,6 @@ def default_session() -> GameSession:
         max_health=START_MAX_HEALTH,
         agility=START_AGILITY,
         strength=START_STRENGTH,
+        speed=START_SPEED,
     )
     return GameSession(character=character)
