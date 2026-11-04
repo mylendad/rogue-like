@@ -22,7 +22,9 @@ class Enemy:
     """Противник: тип, здоровье, ловкость, сила, скорость, враждебность.
 
     Враждебность задаёт расстояние, с которого противник начинает
-    преследовать игрока. Значения совпадают с ключами реестра спецправил
+    преследовать игрока. Поля после враждебности — состояние поведения ИИ
+    (первый удар игрока, сторона зигзага, видимость, ритм атаки огра).
+    Значения типов совпадают с ключами реестра спецправил
     боевого движка (`domain.combat.special.SPECIAL_RULES`).
     """
 
@@ -34,6 +36,9 @@ class Enemy:
     hostility: int = 1
     player_has_attacked: bool = False
     pattern_side: int = 1
+    visible: bool = True
+    resting: bool = False
+    counter_pending: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.enemy_type, EnemyType):

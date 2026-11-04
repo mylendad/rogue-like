@@ -174,7 +174,19 @@ class GameSession:
             player_action()
         if self.level is not None and self.character.health > 0:
             for coord, enemy in list(self.level.enemies.items()):
-                decide_enemy_action(self.level, enemy, coord, rng)
+                result = decide_enemy_action(self.level, enemy, coord, rng, player=self.character)
+                if result is not None and result.hit:
+                    self.character.health -= result.damage
+                    self.record_hit_taken()
+                    if result.effects.max_hp_drain:
+                        self.character.max_health -= result.effects.max_hp_drain
+                        self.character.health = min(
+                            self.character.health, self.character.max_health
+                        )
+                    if result.effects.sleep_target:
+                        self.sleep_turns += 1
+                    if self.character.health <= 0:
+                        break
         if sleeping:
             self.tick_sleep()
         self._tick_elixirs()
