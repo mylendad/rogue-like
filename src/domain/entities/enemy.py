@@ -32,6 +32,8 @@ class Enemy:
     strength: int
     speed: int = 1
     hostility: int = 1
+    player_has_attacked: bool = False
+    pattern_side: int = 1
 
     def __post_init__(self) -> None:
         if not isinstance(self.enemy_type, EnemyType):

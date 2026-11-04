@@ -3,30 +3,25 @@
 from dataclasses import dataclass, field
 
 from domain.entities.item import Item, ItemType
+from domain.entities.world import Coord
 
 START_HEALTH = 10
 START_MAX_HEALTH = 10
 START_AGILITY = 5
 START_STRENGTH = 5
-START_SPEED = 1
 
 BACKPACK_CAPACITY = 9
 
 
 @dataclass
 class Character:
-    """Персонаж: здоровье, макс. здоровье, ловкость, сила (спека entities).
-
-    Скорость не названа в спеке `entities`, но требуется протоколом
-    `Combatant` боевого движка (формула попадания использует скорость
-    обеих сторон); значение по умолчанию задаётся здесь.
-    """
+    """Персонаж с четырьмя хранимыми характеристиками (спека entities)."""
 
     health: int = START_HEALTH
     max_health: int = START_MAX_HEALTH
     agility: int = START_AGILITY
     strength: int = START_STRENGTH
-    speed: int = 1
+    pos: Coord | None = None
     backpack: "Backpack" = field(default_factory=lambda: Backpack())
 
     def __post_init__(self) -> None:
@@ -36,6 +31,11 @@ class Character:
     @property
     def is_player(self) -> bool:
         return True
+
+    @property
+    def speed(self) -> int:
+        """Скорость боя и перемещения, производная от текущей ловкости."""
+        return max(1, self.agility // START_AGILITY)
 
 
 @dataclass

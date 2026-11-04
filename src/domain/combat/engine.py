@@ -98,13 +98,12 @@ def resolve_attack(
         return special.special_rule_for(getattr(who, "enemy_type", None))
 
     defender_rule = rule_of(defender)
-    if (
-        first_player_strike
-        and attacker.is_player
-        and defender_rule is not None
-        and defender_rule.skip_first_hit
-    ):
-        return AttackResult(hit=False, damage=0, killed=False, treasure=None)
+    if attacker.is_player and defender_rule is not None and defender_rule.skip_first_hit:
+        has_attacked = getattr(defender, "player_has_attacked", None)
+        if first_player_strike or has_attacked is False:
+            if has_attacked is False:
+                setattr(defender, "player_has_attacked", True)
+            return AttackResult(hit=False, damage=0, killed=False, treasure=None)
 
     attacker_rule = rule_of(attacker)
     if not force_hit and rng.random() >= hit_probability(attacker, defender):
