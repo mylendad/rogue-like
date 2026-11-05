@@ -1,4 +1,4 @@
-"""Игровая сессия (спека entities)."""
+"""Игровая сессия."""
 
 import random
 from dataclasses import dataclass, field
@@ -21,7 +21,7 @@ ElixirAttribute = Literal["max_health", "agility", "strength"]
 
 @dataclass
 class SessionStats:
-    """Совокупная статистика прохождения (спека entities)."""
+    """Совокупная статистика прохождения."""
 
     treasures_collected: int = 0
     enemies_defeated: int = 0

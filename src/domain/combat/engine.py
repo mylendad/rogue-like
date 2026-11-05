@@ -82,7 +82,7 @@ def resolve_attack(
     first_player_strike: bool = False,
     force_hit: bool = False,
 ) -> AttackResult:
-    """Полный цикл удара: попадание, урон, применение (спека combat).
+    """Полный цикл удара: попадание, урон, применение.
 
     Движок чистый: здоровье цели вычитает вызывающий код по `result.damage`;
     `result.killed` предвычислен как `defender.health - damage <= 0`.

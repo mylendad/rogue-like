@@ -97,9 +97,9 @@ class Level:
     """Уровень: 9 комнат, коридоры, размещения и переход.
 
     Хранит персонажа, противников и предметы по координатам. Валидация
-    структуры по спеке `entities`: ровно 9 комнат, хотя бы один
-    коридор, ровно одна стартовая и одна конечная комната, клетка
-    перехода внутри конечной комнаты.
+    структуры: ровно 9 комнат, связный граф коридоров, ровно одна
+    стартовая и одна конечная комната, клетка перехода внутри конечной
+    комнаты.
     """
 
     rooms: list[Room]
@@ -112,8 +112,17 @@ class Level:
     def __post_init__(self) -> None:
         if len(self.rooms) != ROOMS_PER_LEVEL:
             raise ValueError(f"уровень должен состоять ровно из {ROOMS_PER_LEVEL} комнат")
-        if not self.corridors:
-            raise ValueError("уровень должен иметь хотя бы один коридор")
+        for corridor in self.corridors:
+            if len(corridor.connects) != 2:
+                raise ValueError("коридор должен соединять ровно две комнаты")
+            first, second = corridor.connects
+            if (
+                first == second
+                or not (0 <= first < len(self.rooms))
+                or not (0 <= second < len(self.rooms))
+            ):
+                raise ValueError("коридор должен соединять две разные комнаты уровня")
+        self._ensure_connected_rooms()
         starts = [room for room in self.rooms if room.is_start]
         ends = [room for room in self.rooms if room.is_end]
         if len(starts) != 1:
@@ -122,6 +131,22 @@ class Level:
             raise ValueError("уровень должен иметь ровно одну конечную комнату")
         if not ends[0].is_interior(self.transition):
             raise ValueError("клетка перехода должна лежать в конечной комнате")
+
+    def _ensure_connected_rooms(self) -> None:
+        adjacency: dict[int, set[int]] = {index: set() for index in range(len(self.rooms))}
+        for corridor in self.corridors:
+            first, second = corridor.connects
+            adjacency[first].add(second)
+            adjacency[second].add(first)
+        seen = {0}
+        stack = [0]
+        while stack:
+            for neighbour in adjacency[stack.pop()]:
+                if neighbour not in seen:
+                    seen.add(neighbour)
+                    stack.append(neighbour)
+        if len(seen) != len(self.rooms):
+            raise ValueError("граф комнат уровня должен быть связным")
 
     def passable(self, coord: Coord) -> bool:
         """Проходимость клетки (спека entities, сценарий «Проходимость»)."""

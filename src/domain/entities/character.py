@@ -1,4 +1,4 @@
-"""Персонаж и рюкзак (спека entities)."""
+"""Персонаж и рюкзак."""
 
 from dataclasses import dataclass, field
 
@@ -15,7 +15,7 @@ BACKPACK_CAPACITY = 9
 
 @dataclass
 class Character:
-    """Персонаж с четырьмя хранимыми характеристиками (спека entities)."""
+    """Персонаж с четырьмя хранимыми характеристиками."""
 
     health: int = START_HEALTH
     max_health: int = START_MAX_HEALTH
@@ -40,7 +40,7 @@ class Character:
 
 @dataclass
 class Backpack:
-    """Рюкзак: до 9 предметов каждого типа (спека entities)."""
+    """Рюкзак: до 9 предметов каждого типа."""
 
     items_by_type: dict[ItemType, list[Item]] = field(default_factory=dict)
 
