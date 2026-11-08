@@ -1,0 +1,50 @@
+[tools]
+python = "3.10"
+uv = "latest"
+"pypi:ruff" = "latest"
+"pypi:pytest" = "latest"
+node = "24"
+"npm:pyright" = "latest"
+"npm:opencode-ai" = { version = "latest", allow_builds = ["opencode-ai"] }
+[settings]
+python.uv_venv_auto = "source"
+
+[env]
+_.python.venv = { path = ".venv", create = false }
+
+[tasks.install]
+description = "Install or synchronize Python dependencies"
+run = "uv venv .venv --allow-existing"
+
+[tasks.lint]
+description = "Run Ruff lint checks"
+run = "ruff check ."
+
+[tasks.format]
+description = "Format Python code with Ruff"
+run = "ruff format ."
+
+[tasks.typecheck]
+description = "Run Pyright type checking"
+run = "pyright"
+
+[tasks.test]
+description = "Run project tests"
+run = "python -m pytest"
+
+[tasks.check]
+description = "Run lint, type checking, and tests"
+depends = ["lint", "typecheck", "test"]
+
+[bootstrap.packages]
+"apt:tmux" = "latest"
+
+[tasks.opencode]
+description = "Launch OpenCode in a project-specific tmux session"
+run = "export PATH=\"$HOME/.local/bin:$PATH\"\nif [ -n \"${TMUX:-}\" ]; then\n  exec opencode\nfi\nsession=\"opencode-${MISE_PROJECT_ROOT##*/}\"\nexec tmux new-session -A -s \"$session\" opencode"
+interactive = true
+
+[tasks.serve]
+description = "Run headless OpenCode server"
+run = "PATH=\"$HOME/.local/bin:$PATH\" opencode serve --port ${OPENCODE_PORT:-4096} --hostname 127.0.0.1"
+
