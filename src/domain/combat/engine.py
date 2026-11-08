@@ -24,7 +24,7 @@ class Combatant(Protocol):
 
 class Weapon(Protocol):
     @property
-    def strength_bonus(self) -> int: ...
+    def strength_bonus(self) -> int | None: ...
 
 
 HIT_SMOOTHING = 2
@@ -62,7 +62,7 @@ def hit_probability(attacker: Combatant, defender: Combatant) -> float:
 
 
 def strike_damage(attacker: Combatant, weapon: Weapon | None, rng: random.Random) -> int:
-    base = attacker.strength // 2 + (weapon.strength_bonus if weapon else 0)
+    base = attacker.strength // 2 + ((weapon.strength_bonus or 0) if weapon else 0)
     return base + rng.randint(0, max(0, base // 4))
 
 

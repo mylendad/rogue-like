@@ -22,6 +22,7 @@ class Character:
     agility: int = START_AGILITY
     strength: int = START_STRENGTH
     pos: Coord | None = None
+    weapon: Item | None = None
     backpack: "Backpack" = field(default_factory=lambda: Backpack())
 
     def __post_init__(self) -> None:

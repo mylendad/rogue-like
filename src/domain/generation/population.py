@@ -6,6 +6,7 @@
 """
 
 import random
+from typing import Callable
 
 from domain.entities.enemy import Enemy, EnemyType
 from domain.entities.item import Item, ItemType
@@ -62,18 +63,18 @@ def populate(
         skip_start=False,
         occupied=occupied | enemies.keys(),
     )
-    item_batches: list[tuple[int, Item]] = [
-        (fill.treasures, _make_treasure(fill)),
-        (fill.food, _make_food()),
-        (fill.elixirs, _make_elixir()),
-        (fill.scrolls, _make_scroll()),
-        (fill.weapons, _make_weapon()),
+    item_factories: list[tuple[int, Callable[[], Item]]] = [
+        (fill.treasures, lambda: _make_treasure(fill)),
+        (fill.food, _make_food),
+        (fill.elixirs, lambda: _make_elixir(rng)),
+        (fill.scrolls, lambda: _make_scroll(rng)),
+        (fill.weapons, _make_weapon),
     ]
-    for n, sample in item_batches:
+    for n, factory in item_factories:
         if len(item_cells) < n:
             raise GenerationError("не хватает интерьерных клеток для предметов")
         for _ in range(n):
-            items[item_cells.pop()] = sample
+            items[item_cells.pop()] = factory()
     return enemies, items
 
 
@@ -123,24 +124,60 @@ def _make_food() -> Item:
     return Item(item_type=ItemType.FOOD, subtype="ration", health_gain=FOOD_HEALTH_GAIN)
 
 
-def _make_elixir() -> Item:
-    return Item(
-        item_type=ItemType.ELIXIR,
-        subtype="tonic",
-        max_health_bonus=ELIXIR_BONUSES[0],
-        agility_bonus=ELIXIR_BONUSES[1],
-        strength_bonus=ELIXIR_BONUSES[2],
-    )
+def _make_elixir(rng: random.Random) -> Item:
+    choice = rng.choice(["elixir_max_health", "elixir_agility", "elixir_strength"])
+    if choice == "elixir_max_health":
+        return Item(
+            item_type=ItemType.ELIXIR,
+            subtype=choice,
+            max_health_bonus=ELIXIR_BONUSES[0],
+            agility_bonus=0,
+            strength_bonus=0,
+        )
+    elif choice == "elixir_agility":
+        return Item(
+            item_type=ItemType.ELIXIR,
+            subtype=choice,
+            max_health_bonus=0,
+            agility_bonus=ELIXIR_BONUSES[1],
+            strength_bonus=0,
+        )
+    else:
+        return Item(
+            item_type=ItemType.ELIXIR,
+            subtype=choice,
+            max_health_bonus=0,
+            agility_bonus=0,
+            strength_bonus=ELIXIR_BONUSES[2],
+        )
 
 
-def _make_scroll() -> Item:
-    return Item(
-        item_type=ItemType.SCROLL,
-        subtype="scroll",
-        max_health_bonus=SCROLL_BONUSES[0],
-        agility_bonus=SCROLL_BONUSES[1],
-        strength_bonus=SCROLL_BONUSES[2],
-    )
+def _make_scroll(rng: random.Random) -> Item:
+    choice = rng.choice(["scroll_max_health", "scroll_agility", "scroll_strength"])
+    if choice == "scroll_max_health":
+        return Item(
+            item_type=ItemType.SCROLL,
+            subtype=choice,
+            max_health_bonus=SCROLL_BONUSES[0],
+            agility_bonus=0,
+            strength_bonus=0,
+        )
+    elif choice == "scroll_agility":
+        return Item(
+            item_type=ItemType.SCROLL,
+            subtype=choice,
+            max_health_bonus=0,
+            agility_bonus=SCROLL_BONUSES[1],
+            strength_bonus=0,
+        )
+    else:
+        return Item(
+            item_type=ItemType.SCROLL,
+            subtype=choice,
+            max_health_bonus=0,
+            agility_bonus=0,
+            strength_bonus=SCROLL_BONUSES[2],
+        )
 
 
 def _make_weapon() -> Item:

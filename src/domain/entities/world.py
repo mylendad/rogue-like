@@ -55,6 +55,18 @@ class Room:
             for y in range(self.y + 1, self.y2)
         )
 
+    def contains(self, coord: Coord) -> bool:
+        """Лежит ли клетка внутри прямоугольника комнаты, включая границы."""
+        return self.x <= coord.x <= self.x2 and self.y <= coord.y <= self.y2
+
+    def all_cells(self) -> tuple[Coord, ...]:
+        """Все клетки комнаты, включая стены и дверные проёмы."""
+        return tuple(
+            Coord(x, y)
+            for x in range(self.x, self.x2 + 1)
+            for y in range(self.y, self.y2 + 1)
+        )
+
     def wall_cells(self) -> tuple[Coord, ...]:
         cells: list[Coord] = []
         for x in range(self.x, self.x2 + 1):
@@ -154,6 +166,20 @@ class Level:
             if room.is_interior(coord) or room.is_door(coord):
                 return True
         return any(corridor.is_that_corridor(coord) for corridor in self.corridors)
+
+    @property
+    def width(self) -> int:
+        xs = [room.x2 for room in self.rooms]
+        xs.extend(coord.x for corridor in self.corridors for coord in corridor.cells)
+        xs.append(self.transition.x)
+        return max(xs) + 1
+
+    @property
+    def height(self) -> int:
+        ys = [room.y2 for room in self.rooms]
+        ys.extend(coord.y for corridor in self.corridors for coord in corridor.cells)
+        ys.append(self.transition.y)
+        return max(ys) + 1
 
     def remove_enemy_at(self, coord: Coord) -> Enemy | None:
         return self.enemies.pop(coord, None)
