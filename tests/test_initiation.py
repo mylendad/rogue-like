@@ -2,7 +2,13 @@ import random
 
 from tests.doubles import FakeCombatant, FakeWeapon, first_seed
 
-from domain.combat.engine import AttackResult, Move, attack_or_move
+from domain.combat.engine import MOVE, AttackResult, Move, attack_or_move
+
+
+def test_move_is_singleton():
+    assert Move() is Move()
+    assert Move() is MOVE
+
 
 
 def test_attack_by_moving_into_enemy_cell():
