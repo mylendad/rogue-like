@@ -1,4 +1,4 @@
-"""Игровой цикл и curses-обёртка (спека curses-rendering)."""
+"""Игровой цикл и curses-обёртка."""
 
 from typing import Any, Callable
 
@@ -6,8 +6,9 @@ import curses
 import random
 
 from domain.entities.item import Item, ItemType
-from domain.entities.session import GameSession, default_session
+from domain.entities.session import GameSession, default_session, session_from_progress
 from domain.generation.generator import generate_level
+from domain.persistence import ProgressStorage
 from presentation import input as keymap
 from presentation.renderer import Renderer, init_colors
 
@@ -23,6 +24,30 @@ def _ensure_level(
         session.character.pos = level.player_pos
         if level.player_pos is not None:
             level.player_pos = session.character.pos
+
+
+def _initial_session(storage: ProgressStorage | None) -> GameSession:
+    if storage is None:
+        return default_session()
+    snapshot = storage.load()
+    if snapshot is None:
+        return default_session()
+    return session_from_progress(snapshot)
+
+
+def _persist_after_action(
+    storage: ProgressStorage | None,
+    session: GameSession,
+    *,
+    level_before: int,
+    results_before: int,
+) -> None:
+    if storage is None:
+        return
+    if len(session.run_results) > results_before:
+        storage.save(session.snapshot_progress(completed_level=0))
+    elif session.level_number > level_before:
+        storage.save(session.snapshot_progress(completed_level=level_before))
 
 
 def _choose_item(
@@ -89,6 +114,7 @@ def run(
     renderer: Any | None = None,
     level_factory: Callable[[int, random.Random], Any] = generate_level,
     setup_curses: bool = True,
+    storage: ProgressStorage | None = None,
 ) -> None:
     if setup_curses:
         curses.curs_set(0)
@@ -98,7 +124,7 @@ def run(
     if rng is None:
         rng = random.Random()
     if session is None:
-        session = default_session()
+        session = _initial_session(storage)
     if renderer is None:
         renderer = Renderer()
     message = ""
@@ -120,9 +146,17 @@ def run(
         direction = keymap.direction_for_key(key)
         if direction is not None:
             dx, dy = direction
+            level_before = session.level_number
+            results_before = len(session.run_results)
             result = session.try_move_or_attack(dx, dy, rng=rng)
             if result:
                 session.perform_turn(rng=rng)
+                _persist_after_action(
+                    storage,
+                    session,
+                    level_before=level_before,
+                    results_before=results_before,
+                )
             continue
 
         item_type = keymap.item_type_for_key(key)
@@ -135,9 +169,17 @@ def run(
             if item is None:
                 continue
             chosen: Item = item
+            level_before = session.level_number
+            results_before = len(session.run_results)
             session.perform_turn(
                 lambda: _apply_item(session, chosen),
                 rng=rng,
+            )
+            _persist_after_action(
+                storage,
+                session,
+                level_before=level_before,
+                results_before=results_before,
             )
             continue
 

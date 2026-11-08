@@ -2,11 +2,12 @@
 
 import curses
 
+from datalayer.json_storage import JsonProgressStorage
 from presentation.app import run
 
 
 def main() -> None:
-    curses.wrapper(run)
+    curses.wrapper(run, storage=JsonProgressStorage())
 
 
 if __name__ == "__main__":
