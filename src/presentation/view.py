@@ -1,4 +1,4 @@
-"""Туман войны и прямая видимость (спека curses-rendering)."""
+"""Туман войны и прямая видимость."""
 
 from domain.entities.world import Coord, Level, Room
 

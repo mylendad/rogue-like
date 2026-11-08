@@ -1,4 +1,4 @@
-"""Тема и символы/цвета для curses-рендеринга (спека curses-rendering)."""
+"""Тема и символы/цвета для curses-рендеринга."""
 
 from domain.entities.enemy import EnemyType
 from domain.entities.item import ItemType

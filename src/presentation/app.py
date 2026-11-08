@@ -1,9 +1,8 @@
-"""Игровой цикл и curses-обёртка (спека curses-rendering)."""
-
-from typing import Any, Callable
+"""Игровой цикл и curses-обёртка."""
 
 import curses
 import random
+from typing import Any, Callable
 
 from domain.entities.item import Item, ItemType
 from domain.entities.session import GameSession, default_session

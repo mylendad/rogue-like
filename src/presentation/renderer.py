@@ -1,8 +1,8 @@
-"""Отрисовка игрового поля, интерфейса (HUD), меню и статистики в curses."""
-
-from typing import Any
+"""Отрисовка игрового поля, интерфейса, меню и статистики в curses."""
 
 import curses
+from typing import Any
+
 from domain.entities.enemy import EnemyType
 from domain.entities.item import ItemType
 from domain.entities.session import GameSession
@@ -281,7 +281,9 @@ class Renderer:
             "  Сокровища | Уровень | Убито | Еда | Эликсиры | Свитки | Удары (попал/промах/урон)",
             "-" * 75,
         ]
-        sorted_results = sorted(session.run_results, key=lambda r: r.treasures_collected, reverse=True)
+        sorted_results = sorted(
+            session.run_results, key=lambda r: r.treasures_collected, reverse=True
+        )
         if not sorted_results:
             lines.append("  Нет завершённых попыток.")
         else:
