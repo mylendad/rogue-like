@@ -120,6 +120,11 @@ class Level:
     player_pos: Coord | None = None
     enemies: dict[Coord, Enemy] = field(default_factory=dict)
     items: dict[Coord, Item] = field(default_factory=dict)
+    _passable_cells: set[Coord] = field(
+        init=False, repr=False, compare=False, default_factory=set
+    )
+    _width: int = field(init=False, repr=False, compare=False, default=0)
+    _height: int = field(init=False, repr=False, compare=False, default=0)
 
     def __post_init__(self) -> None:
         if len(self.rooms) != ROOMS_PER_LEVEL:
@@ -143,6 +148,30 @@ class Level:
             raise ValueError("уровень должен иметь ровно одну конечную комнату")
         if not ends[0].is_interior(self.transition):
             raise ValueError("клетка перехода должна лежать в конечной комнате")
+        self._passable_cells = self._collect_passable_cells()
+        self._width = self._compute_width()
+        self._height = self._compute_height()
+
+    def _collect_passable_cells(self) -> set[Coord]:
+        cells: set[Coord] = set()
+        for room in self.rooms:
+            cells.update(room.interior_cells())
+            cells.update(door for door in room.doors if room.is_on_border(door))
+        for corridor in self.corridors:
+            cells.update(corridor.cells)
+        return cells
+
+    def _compute_width(self) -> int:
+        xs = [room.x2 for room in self.rooms]
+        xs.extend(coord.x for corridor in self.corridors for coord in corridor.cells)
+        xs.append(self.transition.x)
+        return max(xs) + 1
+
+    def _compute_height(self) -> int:
+        ys = [room.y2 for room in self.rooms]
+        ys.extend(coord.y for corridor in self.corridors for coord in corridor.cells)
+        ys.append(self.transition.y)
+        return max(ys) + 1
 
     def _ensure_connected_rooms(self) -> None:
         adjacency: dict[int, set[int]] = {index: set() for index in range(len(self.rooms))}
@@ -162,24 +191,15 @@ class Level:
 
     def passable(self, coord: Coord) -> bool:
         """Проходимость клетки (спека entities, сценарий «Проходимость»)."""
-        for room in self.rooms:
-            if room.is_interior(coord) or room.is_door(coord):
-                return True
-        return any(corridor.is_that_corridor(coord) for corridor in self.corridors)
+        return coord in self._passable_cells
 
     @property
     def width(self) -> int:
-        xs = [room.x2 for room in self.rooms]
-        xs.extend(coord.x for corridor in self.corridors for coord in corridor.cells)
-        xs.append(self.transition.x)
-        return max(xs) + 1
+        return self._width
 
     @property
     def height(self) -> int:
-        ys = [room.y2 for room in self.rooms]
-        ys.extend(coord.y for corridor in self.corridors for coord in corridor.cells)
-        ys.append(self.transition.y)
-        return max(ys) + 1
+        return self._height
 
     def remove_enemy_at(self, coord: Coord) -> Enemy | None:
         return self.enemies.pop(coord, None)

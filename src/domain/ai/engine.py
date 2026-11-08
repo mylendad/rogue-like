@@ -109,11 +109,11 @@ def _random_step(
     directions: tuple[tuple[int, int], ...],
     rng: random.Random,
 ) -> None:
-    candidates = [
-        Coord(enemy_pos.x + dx, enemy_pos.y + dy)
-        for dx, dy in directions
-        if _available(level, room, Coord(enemy_pos.x + dx, enemy_pos.y + dy))
-    ]
+    candidates = []
+    for dx, dy in directions:
+        coord = Coord(enemy_pos.x + dx, enemy_pos.y + dy)
+        if _available(level, room, coord):
+            candidates.append(coord)
     if candidates:
         _move(level, enemy_pos, rng.choice(candidates))
 

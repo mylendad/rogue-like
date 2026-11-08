@@ -4,6 +4,7 @@ from domain.entities.item import Item, ItemType
 from domain.entities.session import RunResult, default_session
 from domain.entities.world import Coord, Corridor, Level, Room
 from presentation.renderer import Renderer
+from tests.doubles import chain_corridors
 
 
 class FakeWindow:
@@ -38,7 +39,11 @@ def make_level() -> Level:
         cells=(Coord(6, 2), Coord(7, 2), Coord(8, 2)),
         connects=(0, 1),
     )
-    return Level(rooms=rooms, corridors=[corridor], transition=Coord(41, 1))
+    return Level(
+        rooms=rooms,
+        corridors=[corridor, *chain_corridors(rooms)],
+        transition=Coord(41, 1),
+    )
 
 
 def make_session():

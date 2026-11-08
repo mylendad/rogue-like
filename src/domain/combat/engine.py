@@ -1,6 +1,6 @@
 import random
 from dataclasses import dataclass
-from typing import Callable, Protocol
+from typing import Callable, ClassVar, Protocol, cast
 
 from domain.combat import special
 
@@ -51,7 +51,19 @@ class AttackResult:
 
 @dataclass(frozen=True)
 class Move:
-    pass
+    """Маркер перемещения. Синглтон: все вызовы возвращают один экземпляр."""
+
+    _instance: ClassVar[object] = None
+
+    def __new__(cls) -> "Move":
+        instance = cls._instance
+        if instance is None:
+            instance = super().__new__(cls)
+            cls._instance = instance
+        return cast(Move, instance)
+
+
+MOVE = Move()
 
 
 def hit_probability(attacker: Combatant, defender: Combatant) -> float:
@@ -156,10 +168,10 @@ def attack_or_move(
 
     Наличие противника определяет вызывающий код (движок не знает сетку
     уровня): `enemy` — сущность на целевой клетке или None. При пустой
-    клетке выполняется `move_into` и возвращается `Move()`.
+    клетке выполняется `move_into` и возвращается синглтон `MOVE`.
     """
     if enemy is None:
         if move_into is not None:
             move_into()
-        return Move()
+        return MOVE
     return resolve_attack(player, enemy, weapon, rng, first_player_strike=first_player_strike)

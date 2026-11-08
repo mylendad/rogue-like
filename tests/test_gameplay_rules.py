@@ -108,15 +108,16 @@ def test_max_health_elixir_clamps_health_on_expiry():
 
 def test_derived_speed_limits_movement_distance():
     session = session_on_level()
-    assert session.character.pos is not None
+    assert session.character.speed == 1
 
-    session.try_move(Coord(3, 1))
-    assert session.character.pos == Coord(1, 1)
+    assert session.try_move_or_attack(1, 0) is True
+    assert session.character.pos == Coord(2, 1)
 
     session.character.agility = 10
-    session.try_move(Coord(3, 1))
-    assert session.character.pos == Coord(3, 1)
-    assert session.stats.cells_walked == 2
+    assert session.character.speed == 2
+    assert session.try_move_or_attack(1, 0) is True
+    assert session.character.pos == Coord(4, 1)
+    assert session.stats.cells_walked == 3
 
 
 def test_full_backpack_leaves_item_on_map():
