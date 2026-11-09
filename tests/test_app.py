@@ -1,5 +1,6 @@
 import random
 
+from datalayer.json_storage import JsonProgressStorage
 from domain.combat.engine import resolve_attack
 from domain.entities.enemy import Enemy, EnemyType
 from domain.entities.item import Item, ItemType
@@ -188,6 +189,71 @@ def test_app_death_records_result_and_restarts():
     assert len(session.run_results) == 1
     assert session.run_results[0].success is False
     assert session.stats.treasures_collected == 0
+
+
+def test_app_transition_saves_completed_level(tmp_path):
+    session = make_session()
+    level = session.level
+    assert level is not None
+    level.transition = Coord(2, 1)
+    session.stats.treasures_collected = 13
+    storage = JsonProgressStorage(tmp_path / "save.json")
+
+    run(
+        FakeWindow([ord("d"), ord("q"), ord("y")]),
+        session=session,
+        renderer=FakeRenderer(),
+        level_factory=level_factory,
+        setup_curses=False,
+        storage=storage,
+    )
+
+    loaded = storage.load()
+    assert loaded is not None
+    assert loaded.completed_level == 1
+    assert loaded.treasures_collected == 13
+
+
+def test_app_death_saves_history_and_clears_progress(tmp_path):
+    session = make_session()
+    level = session.level
+    assert level is not None
+    session.character.health = 1
+    enemy = Enemy(
+        enemy_type=EnemyType.ZOMBIE,
+        health=100,
+        agility=100,
+        strength=100,
+        speed=1,
+        hostility=10,
+    )
+    level.enemies[Coord(2, 1)] = enemy
+    session.character.backpack.add(
+        Item(item_type=ItemType.FOOD, subtype="ration", health_gain=2)
+    )
+    seed = None
+    for candidate in range(1000):
+        if resolve_attack(enemy, session.character, None, random.Random(candidate)).hit:
+            seed = candidate
+            break
+    assert seed is not None
+    storage = JsonProgressStorage(tmp_path / "save.json")
+
+    run(
+        FakeWindow([ord("j"), ord("1"), ord("q"), ord("y")]),
+        session=session,
+        rng=random.Random(seed),
+        renderer=FakeRenderer(),
+        level_factory=level_factory,
+        setup_curses=False,
+        storage=storage,
+    )
+
+    loaded = storage.load()
+    assert loaded is not None
+    assert loaded.completed_level == 0
+    assert len(loaded.runs) == 1
+    assert loaded.runs[0].success is False
 
 
 def test_app_last_level_ends_without_new_run():

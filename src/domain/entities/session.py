@@ -1,4 +1,4 @@
-"""Игровая сессия."""
+"""Игровая сессия и её сохраняемое состояние."""
 
 import random
 from dataclasses import dataclass, field
@@ -52,6 +52,42 @@ class RunResult:
     hits_taken: int
     cells_walked: int
     success: bool
+
+
+@dataclass(frozen=True)
+class CharacterProgress:
+    """Характеристики персонажа в сохранённом прогрессе."""
+
+    health: int
+    max_health: int
+    agility: int
+    strength: int
+
+
+@dataclass(frozen=True)
+class StatsProgress:
+    """Накопленная статистика в сохранённом прогрессе."""
+
+    treasures_collected: int = 0
+    enemies_defeated: int = 0
+    food_eaten: int = 0
+    elixirs_drunk: int = 0
+    scrolls_read: int = 0
+    hits_dealt: int = 0
+    missed_attacks: int = 0
+    hits_taken: int = 0
+    cells_walked: int = 0
+
+
+@dataclass(frozen=True)
+class ProgressSnapshot:
+    """Полный снимок для хранения: прогресс и история попыток."""
+
+    completed_level: int
+    treasures_collected: int
+    character: CharacterProgress
+    stats: StatsProgress
+    runs: tuple[RunResult, ...] = ()
 
 
 @dataclass
@@ -288,6 +324,70 @@ class GameSession:
 
         return moved
 
+    def snapshot_progress(self, *, completed_level: int | None = None) -> ProgressSnapshot:
+        """Формирует снимок прогресса и истории без обращения к хранилищу."""
+        if completed_level is None:
+            completed_level = max(0, self.level_number - 1)
+        return ProgressSnapshot(
+            completed_level=completed_level,
+            treasures_collected=self.stats.treasures_collected,
+            character=CharacterProgress(
+                health=self.character.health,
+                max_health=self.character.max_health,
+                agility=self.character.agility,
+                strength=self.character.strength,
+            ),
+            stats=StatsProgress(
+                treasures_collected=self.stats.treasures_collected,
+                enemies_defeated=self.stats.enemies_defeated,
+                food_eaten=self.stats.food_eaten,
+                elixirs_drunk=self.stats.elixirs_drunk,
+                scrolls_read=self.stats.scrolls_read,
+                hits_dealt=self.stats.hits_dealt,
+                missed_attacks=self.stats.missed_attacks,
+                hits_taken=self.stats.hits_taken,
+                cells_walked=self.stats.cells_walked,
+            ),
+            runs=tuple(self.run_results),
+        )
+
+    def apply_progress(self, snapshot: ProgressSnapshot) -> None:
+        """Восстанавливает сессию из снимка, не создавая уровень."""
+        self.level = None
+        self.character.pos = None
+        self.character.weapon = None
+        self.character.backpack = Backpack()
+        self.sleep_turns = 0
+        self.elixir_effects.clear()
+        self.game_over = False
+        self.run_results = list(snapshot.runs)
+
+        if 0 < snapshot.completed_level < LAST_LEVEL:
+            self.level_number = snapshot.completed_level + 1
+            self.character.health = snapshot.character.health
+            self.character.max_health = snapshot.character.max_health
+            self.character.agility = snapshot.character.agility
+            self.character.strength = snapshot.character.strength
+            self.stats = SessionStats(
+                treasures_collected=snapshot.treasures_collected,
+                enemies_defeated=snapshot.stats.enemies_defeated,
+                food_eaten=snapshot.stats.food_eaten,
+                elixirs_drunk=snapshot.stats.elixirs_drunk,
+                scrolls_read=snapshot.stats.scrolls_read,
+                hits_dealt=snapshot.stats.hits_dealt,
+                missed_attacks=snapshot.stats.missed_attacks,
+                hits_taken=snapshot.stats.hits_taken,
+                cells_walked=snapshot.stats.cells_walked,
+            )
+            return
+
+        self.level_number = 1
+        self.character.health = START_HEALTH
+        self.character.max_health = START_MAX_HEALTH
+        self.character.agility = START_AGILITY
+        self.character.strength = START_STRENGTH
+        self.stats = SessionStats()
+
     def _snapshot_result(self, *, success: bool) -> RunResult:
         return RunResult(
             treasures_collected=self.stats.treasures_collected,
@@ -377,3 +477,10 @@ def default_session() -> GameSession:
         strength=START_STRENGTH,
     )
     return GameSession(character=character)
+
+
+def session_from_progress(snapshot: ProgressSnapshot) -> GameSession:
+    """Создаёт сессию и восстанавливает в ней сохранённый прогресс."""
+    session = default_session()
+    session.apply_progress(snapshot)
+    return session
