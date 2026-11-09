@@ -1,4 +1,4 @@
-"""Противник (спека entities)."""
+"""Противник."""
 
 from dataclasses import dataclass
 from enum import Enum

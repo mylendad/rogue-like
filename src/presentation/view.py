@@ -1,4 +1,4 @@
-"""Туман войны и прямая видимость (спека curses-rendering)."""
+"""Туман войны и прямая видимость."""
 
 from domain.entities.world import Coord, Level, Room
 
@@ -24,13 +24,17 @@ def compute_visibility(level: Level, player_pos: Coord) -> set[Coord]:
             visible.add(c)
 
     # LOS лучи во всех направлениях в пределах радиуса
+    width = level.width
+    height = level.height
     for r in range(-VISIBILITY_RADIUS, VISIBILITY_RADIUS + 1):
         for c in range(-VISIBILITY_RADIUS, VISIBILITY_RADIUS + 1):
             if r * r + c * c > VISIBILITY_RADIUS * VISIBILITY_RADIUS:
                 continue
-            target = Coord(player_pos.x + c, player_pos.y + r)
-            if not (0 <= target.x < level.width and 0 <= target.y < level.height):
+            target_x = player_pos.x + c
+            target_y = player_pos.y + r
+            if not (0 <= target_x < width and 0 <= target_y < height):
                 continue
+            target = Coord(target_x, target_y)
             if _has_line_of_sight(level, player_pos, target):
                 visible.add(target)
 

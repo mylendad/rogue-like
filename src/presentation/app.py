@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 import curses
 import random
+from typing import Any, Callable
 
 from domain.entities.item import Item, ItemType
 from domain.entities.session import GameSession, default_session, session_from_progress

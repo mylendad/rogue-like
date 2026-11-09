@@ -1,5 +1,6 @@
 from domain.entities.world import Coord, Corridor, Level, Room
 from presentation.view import VISIBILITY_RADIUS, compute_visibility
+from tests.doubles import chain_corridors
 
 
 def make_corridor_level() -> Level:
@@ -9,7 +10,11 @@ def make_corridor_level() -> Level:
     cells = tuple(Coord(x, 1) for x in range(2, 8))
     cells += tuple(Coord(x, 1) for x in range(9, 21))
     corridor = Corridor(cells=cells, connects=(0, 8))
-    return Level(rooms=rooms, corridors=[corridor], transition=Coord(21, 1))
+    return Level(
+        rooms=rooms,
+        corridors=[corridor, *chain_corridors(rooms)],
+        transition=Coord(21, 1),
+    )
 
 
 def test_room_fully_visible():

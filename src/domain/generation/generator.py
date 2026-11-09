@@ -108,9 +108,9 @@ def _generate_corridors(rooms: list[Room], rng: random.Random) -> list[Corridor]
     corridors: list[Corridor] = []
     for a_index, b_index in sorted(tree | set(extra)):
         first, second = rooms[a_index], rooms[b_index]
-        doors, cells = _corridor_geometry(first, second, rng)
-        first.doors = tuple(set(first.doors) | set(doors))
-        second.doors = tuple(set(second.doors) | set(doors))
+        (door_first, door_second), cells = _corridor_geometry(first, second, rng)
+        first.doors = tuple(set(first.doors) | {door_first})
+        second.doors = tuple(set(second.doors) | {door_second})
         corridors.append(Corridor(cells=tuple(cells), connects=(a_index, b_index)))
     return corridors
 
